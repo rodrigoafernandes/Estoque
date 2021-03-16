@@ -1,0 +1,92 @@
+# Generation of Kubernetes YAML is still under development!
+#
+# Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
+# Created with podman-3.0.1
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2021-03-16T12:02:24Z"
+  labels:
+    app: product-inventory
+  name: product-inventory
+spec:
+  containers:
+  - command:
+    - ./product-inventory
+    - -Dquarkus.http.host=0.0.0.0
+    env:
+    - name: PATH
+      value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    - name: TERM
+      value: xterm
+    - name: container
+      value: podman
+    - name: SSL_CERT_FILE
+      value: /etc/ssl/certs/ca-certificates.crt
+    image: localhost/product-inventory:1.0.0
+    name: product-api
+    ports:
+    - containerPort: 8080
+      hostPort: 8080
+      protocol: TCP
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities:
+        drop:
+        - CAP_MKNOD
+        - CAP_NET_RAW
+        - CAP_AUDIT_WRITE
+      privileged: false
+      readOnlyRootFilesystem: false
+      runAsGroup: 65532
+      runAsUser: 65532
+      seLinuxOptions: {}
+    workingDir: /
+  - args:
+    - mysqld
+    command:
+    - docker-entrypoint.sh
+    env:
+    - name: PATH
+      value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    - name: TERM
+      value: xterm
+    - name: container
+      value: podman
+    - name: MYSQL_ROOT_PASSWORD
+      value: SVCPRODUCT
+    - name: MARIADB_MAJOR
+      value: "10.5"
+    - name: MARIADB_VERSION
+      value: 1:10.5.9+maria~focal
+    - name: GOSU_VERSION
+      value: "1.12"
+    - name: MYSQL_PASSWORD
+      value: SVCPRODUCT
+    - name: GPG_KEYS
+      value: 177F4010FE56CA3336300305F1656F24C74CD1D8
+    - name: MYSQL_DATABASE
+      value: DBPDDEV01
+    - name: MYSQL_USER
+      value: SVCPRODUCT
+    image: docker.io/library/mariadb:10.5.9-focal
+    name: mariadb
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities:
+        drop:
+        - CAP_MKNOD
+        - CAP_NET_RAW
+        - CAP_AUDIT_WRITE
+      privileged: false
+      readOnlyRootFilesystem: false
+      seLinuxOptions: {}
+    workingDir: /
+  dnsConfig: {}
+  restartPolicy: Always
+status: {}
+

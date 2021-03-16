@@ -7,7 +7,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import br.com.alura.estoque.R;
-import br.com.alura.estoque.asynctask.BaseAsyncTask;
+import br.com.alura.estoque.asynctask.TaskRunner;
 import br.com.alura.estoque.database.EstoqueDatabase;
 import br.com.alura.estoque.database.dao.ProdutoDAO;
 import br.com.alura.estoque.model.Produto;
@@ -37,9 +37,7 @@ public class ListaProdutosActivity extends AppCompatActivity {
     }
 
     private void buscaProdutos() {
-        new BaseAsyncTask<>(dao::buscaTodos,
-                resultado -> adapter.atualiza(resultado))
-                .execute();
+        new TaskRunner().executeAsync(() -> dao.buscaTodos(), result -> adapter.atualiza(result));
     }
 
     private void configuraListaProdutos() {
@@ -51,11 +49,12 @@ public class ListaProdutosActivity extends AppCompatActivity {
 
     private void remove(int posicao,
                         Produto produtoRemovido) {
-        new BaseAsyncTask<>(() -> {
+        new TaskRunner().executeAsync(() -> {
             dao.remove(produtoRemovido);
             return null;
-        }, resultado -> adapter.remove(posicao))
-                .execute();
+        }, result -> {
+            adapter.remove(posicao);
+        });
     }
 
     private void configuraFabSalvaProduto() {
@@ -68,12 +67,10 @@ public class ListaProdutosActivity extends AppCompatActivity {
     }
 
     private void salva(Produto produto) {
-        new BaseAsyncTask<>(() -> {
+        new TaskRunner().executeAsync(() -> {
             long id = dao.salva(produto);
             return dao.buscaProduto(id);
-        }, produtoSalvo ->
-                adapter.adiciona(produtoSalvo))
-                .execute();
+        }, result -> adapter.adiciona(result));
     }
 
     private void abreFormularioEditaProduto(int posicao, Produto produto) {
@@ -83,12 +80,10 @@ public class ListaProdutosActivity extends AppCompatActivity {
     }
 
     private void edita(int posicao, Produto produto) {
-        new BaseAsyncTask<>(() -> {
+        new TaskRunner().executeAsync(() -> {
             dao.atualiza(produto);
             return produto;
-        }, produtoEditado ->
-                adapter.edita(posicao, produtoEditado))
-                .execute();
+        }, result -> adapter.edita(posicao, result));
     }
 
 
