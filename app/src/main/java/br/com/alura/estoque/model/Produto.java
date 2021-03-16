@@ -10,31 +10,31 @@ public class Produto {
 
     @PrimaryKey(autoGenerate = true)
     private final long id;
-    private final String nome;
-    private final BigDecimal preco;
-    private final int quantidade;
+    private final String name;
+    private final BigDecimal price;
+    private final int quantity;
 
-    public Produto(long id, String nome, BigDecimal preco, int quantidade) {
+    public Produto(long id, String name, BigDecimal price, int quantity) {
         this.id = id;
-        this.nome = nome;
-        this.preco = preco;
-        this.quantidade = quantidade;
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
     }
 
     public long getId() {
         return id;
     }
 
-    public String getNome() {
-        return nome;
+    public String getName() {
+        return name;
     }
 
-    public BigDecimal getPreco() {
-        return preco.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+    public BigDecimal getPrice() {
+        return price.setScale(2, BigDecimal.ROUND_HALF_EVEN);
     }
 
-    public int getQuantidade() {
-        return quantidade;
+    public int getQuantity() {
+        return quantity;
     }
 
 }

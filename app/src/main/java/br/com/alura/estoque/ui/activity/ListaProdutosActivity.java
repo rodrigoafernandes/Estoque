@@ -1,11 +1,16 @@
 package br.com.alura.estoque.ui.activity;
 
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
+
+import java.io.IOException;
+import java.util.List;
+
 import br.com.alura.estoque.R;
 import br.com.alura.estoque.asynctask.TaskRunner;
 import br.com.alura.estoque.database.EstoqueDatabase;
@@ -14,6 +19,10 @@ import br.com.alura.estoque.model.Produto;
 import br.com.alura.estoque.ui.dialog.EditaProdutoDialog;
 import br.com.alura.estoque.ui.dialog.SalvaProdutoDialog;
 import br.com.alura.estoque.ui.recyclerview.adapter.ListaProdutosAdapter;
+import br.com.alura.estoque.ws.client.ProductApiWsClient;
+import br.com.alura.estoque.ws.config.ProductApiWsClientConfig;
+import retrofit2.Call;
+import retrofit2.Response;
 
 public class ListaProdutosActivity extends AppCompatActivity {
 
@@ -37,7 +46,25 @@ public class ListaProdutosActivity extends AppCompatActivity {
     }
 
     private void buscaProdutos() {
-        new TaskRunner().executeAsync(() -> dao.buscaTodos(), result -> adapter.atualiza(result));
+        ProductApiWsClient client = new ProductApiWsClientConfig().getClient();
+        Call<List<Produto>> call = client.findAll();
+
+        new TaskRunner().executeAsync(() -> {
+            try {
+                Response<List<Produto>> response = call.execute();
+
+                return response.body();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }, result -> {
+            if (result != null) {
+                adapter.atualiza(result);
+            } else {
+                Toast.makeText(this, "Error to retrieve from API", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void configuraListaProdutos() {

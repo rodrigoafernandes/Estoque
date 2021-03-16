@@ -119,9 +119,9 @@ public class ListaProdutosAdapter extends
         void vincula(Produto produto) {
             this.produto = produto;
             campoId.setText(String.valueOf(produto.getId()));
-            campoNome.setText(produto.getNome());
-            campoPreco.setText(formataParaMoeda(produto.getPreco()));
-            campoQuantidade.setText(String.valueOf(produto.getQuantidade()));
+            campoNome.setText(produto.getName());
+            campoPreco.setText(formataParaMoeda(produto.getPrice()));
+            campoQuantidade.setText(String.valueOf(produto.getQuantity()));
         }
 
         private String formataParaMoeda(BigDecimal valor) {
