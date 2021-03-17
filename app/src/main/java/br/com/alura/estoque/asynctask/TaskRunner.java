@@ -8,7 +8,7 @@ import java.util.concurrent.Executors;
 
 public class TaskRunner {
 
-    private final Executor executor = Executors.newSingleThreadExecutor();
+    private final Executor executor = Executors.newCachedThreadPool();
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     public <R> void executeAsync(AsyncTask<R> callable, Callback<R> callback) {

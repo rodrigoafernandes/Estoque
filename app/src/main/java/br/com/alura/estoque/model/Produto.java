@@ -9,10 +9,10 @@ import androidx.room.PrimaryKey;
 public class Produto {
 
     @PrimaryKey(autoGenerate = true)
-    private final long id;
-    private final String name;
-    private final BigDecimal price;
-    private final int quantity;
+    private long id;
+    private String name;
+    private BigDecimal price;
+    private int quantity;
 
     public Produto(long id, String name, BigDecimal price, int quantity) {
         this.id = id;
@@ -37,4 +37,19 @@ public class Produto {
         return quantity;
     }
 
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
 }

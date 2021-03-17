@@ -8,27 +8,22 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.io.IOException;
-import java.util.List;
-
 import br.com.alura.estoque.R;
 import br.com.alura.estoque.asynctask.TaskRunner;
 import br.com.alura.estoque.database.EstoqueDatabase;
 import br.com.alura.estoque.database.dao.ProdutoDAO;
 import br.com.alura.estoque.model.Produto;
+import br.com.alura.estoque.repository.ProductRepository;
 import br.com.alura.estoque.ui.dialog.EditaProdutoDialog;
 import br.com.alura.estoque.ui.dialog.SalvaProdutoDialog;
 import br.com.alura.estoque.ui.recyclerview.adapter.ListaProdutosAdapter;
-import br.com.alura.estoque.ws.client.ProductApiWsClient;
-import br.com.alura.estoque.ws.config.ProductApiWsClientConfig;
-import retrofit2.Call;
-import retrofit2.Response;
 
 public class ListaProdutosActivity extends AppCompatActivity {
 
     private static final String TITULO_APPBAR = "Lista de produtos";
     private ListaProdutosAdapter adapter;
     private ProdutoDAO dao;
+    private ProductRepository repository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,29 +37,8 @@ public class ListaProdutosActivity extends AppCompatActivity {
         EstoqueDatabase db = EstoqueDatabase.getInstance(this);
         dao = db.getProdutoDAO();
 
-        buscaProdutos();
-    }
-
-    private void buscaProdutos() {
-        ProductApiWsClient client = new ProductApiWsClientConfig().getClient();
-        Call<List<Produto>> call = client.findAll();
-
-        new TaskRunner().executeAsync(() -> {
-            try {
-                Response<List<Produto>> response = call.execute();
-
-                return response.body();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }, result -> {
-            if (result != null) {
-                adapter.atualiza(result);
-            } else {
-                Toast.makeText(this, "Error to retrieve from API", Toast.LENGTH_LONG).show();
-            }
-        });
+        repository = new ProductRepository(this);
+        repository.buscaProdutos(adapter::atualiza);
     }
 
     private void configuraListaProdutos() {
@@ -90,14 +64,19 @@ public class ListaProdutosActivity extends AppCompatActivity {
     }
 
     private void abreFormularioSalvaProduto() {
-        new SalvaProdutoDialog(this, this::salva).mostra();
-    }
+        new SalvaProdutoDialog(this, produto ->
+                repository.salva(produto, new ProductRepository.ProductsMethodsCallback<Produto>() {
+                    @Override
+                    public void onSuccess(Produto result) {
+                        adapter.adiciona(result);
+                    }
 
-    private void salva(Produto produto) {
-        new TaskRunner().executeAsync(() -> {
-            long id = dao.salva(produto);
-            return dao.buscaProduto(id);
-        }, result -> adapter.adiciona(result));
+                    @Override
+                    public void onFail(String error) {
+                        Toast.makeText(ListaProdutosActivity.this, "Não foi possível salvar o produto", Toast.LENGTH_LONG).show();
+                    }
+                }))
+                .mostra();
     }
 
     private void abreFormularioEditaProduto(int posicao, Produto produto) {
