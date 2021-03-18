@@ -2,7 +2,6 @@ package br.com.alura.estoque.repository;
 
 import android.content.Context;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +14,7 @@ import br.com.alura.estoque.ws.config.ProductApiWsClientConfig;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.internal.EverythingIsNonNull;
 
 public class ProductRepository {
 
@@ -26,12 +26,82 @@ public class ProductRepository {
         this.dao = EstoqueDatabase.getInstance(context).getProdutoDAO();
     }
 
-    public void buscaProdutos(ProductsMethodsListener<List<Produto>> listener) {
-        findProductsDB(listener);
+    public void buscaProdutos(ProductsMethodsCallback<List<Produto>> callback) {
+        findProductsDB(callback);
     }
 
     public void salva(Produto produto, ProductsMethodsCallback<Produto> callback) {
         saveOnAPI(produto, callback);
+    }
+
+    public void edita(Produto produto, ProductsMethodsCallback<Produto> callback) {
+        updateOnAPI(produto, callback);
+    }
+
+    public void remove(Produto produto, ProductsMethodsCallback<Void> callback) {
+        deleteOnAPI(produto, callback);
+    }
+
+    private void deleteOnAPI(Produto produto, ProductsMethodsCallback<Void> callback) {
+        Call<Void> call = client.delete(produto.getId());
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            @EverythingIsNonNull
+            public void onResponse(Call<Void> call, Response<Void> response) {
+
+                if (response.isSuccessful()) {
+                    removeOnDB(produto, callback);
+                } else {
+                    callback.onFail(String.format("Error deleting product %d on API. %d", produto.getId(), response.code()));
+                }
+
+            }
+
+            @Override
+            @EverythingIsNonNull
+            public void onFailure(Call<Void> call, Throwable t) {
+                callback.onFail(String.format("Error calling products API: %s", t.getMessage()));
+            }
+        });
+    }
+
+    private void removeOnDB(Produto produto, ProductsMethodsCallback<Void> callback) {
+        new TaskRunner().executeAsync(() -> {
+            dao.remove(produto);
+            return null;
+        }, result -> callback.onSuccess(null));
+    }
+
+    private void updateOnAPI(Produto produto, ProductsMethodsCallback<Produto> callback) {
+        Call<Void> call = client.update(produto.getId(), produto);
+
+        call.enqueue(new Callback<Void>() {
+            @Override
+            @EverythingIsNonNull
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+
+                    updateProductOnDB(produto, callback);
+
+                } else {
+                    callback.onFail(String.format("Error updating product %d on API: %d", produto.getId(), response.code()));
+                }
+            }
+
+            @Override
+            @EverythingIsNonNull
+            public void onFailure(Call<Void> call, Throwable t) {
+                callback.onFail(String.format("Error calling products API: %s", t.getMessage()));
+            }
+        });
+    }
+
+    private void updateProductOnDB(Produto produto, ProductsMethodsCallback<Produto> callback) {
+        new TaskRunner().executeAsync(() -> {
+            dao.atualiza(produto);
+            return produto;
+        }, callback::onSuccess);
     }
 
     private void saveOnAPI(Produto produto, ProductsMethodsCallback<Produto> callback) {
@@ -39,6 +109,7 @@ public class ProductRepository {
 
         call.enqueue(new Callback<Void>() {
             @Override
+            @EverythingIsNonNull
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
 
@@ -46,7 +117,7 @@ public class ProductRepository {
                     
                     if (headers.containsKey(LOCATION_HEADER)) {
                         String location = headers.get(LOCATION_HEADER).get(0);
-                        long generatedId = Long.valueOf(
+                        long generatedId = Long.parseLong(
                                 location.substring(location.lastIndexOf("/") + 1));
 
                         saveOnDB(generatedId, produto, callback);
@@ -56,6 +127,7 @@ public class ProductRepository {
             }
 
             @Override
+            @EverythingIsNonNull
             public void onFailure(Call<Void> call, Throwable t) {
                 callback.onFail(String.format("Error to call API. %s", t.getMessage()));
             }
@@ -70,32 +142,42 @@ public class ProductRepository {
         }, callback::onSuccess);
     }
 
-    private void findProductsDB(ProductsMethodsListener<List<Produto>> listener) {
+    private void findProductsDB(ProductsMethodsCallback<List<Produto>> callback) {
         new TaskRunner().executeAsync(() -> dao.buscaTodos(), result -> {
-            listener.whenProductsIsLoaded(result);
-            findProductsOnApi(listener);
+            callback.onSuccess(result);
+            findProductsOnApi(callback);
         });
     }
 
-    private void findProductsOnApi(ProductsMethodsListener<List<Produto>> listener) {
+    private void findProductsOnApi(ProductsMethodsCallback<List<Produto>> callback) {
         Call<List<Produto>> call = client.findAll();
 
-        new TaskRunner().executeAsync(() -> {
-            try {
-                Response<List<Produto>> response = call.execute();
-
-                List<Produto> products = response.body();
-
-                dao.salva(products);
-            } catch (IOException e) {
-                e.printStackTrace();
+        call.enqueue(new Callback<List<Produto>>() {
+            @Override
+            @EverythingIsNonNull
+            public void onResponse(Call<List<Produto>> call, Response<List<Produto>> response) {
+                if (response.isSuccessful()) {
+                    List<Produto> produtos = response.body();
+                    updateProductsDB(produtos, callback);
+                } else {
+                    callback.onFail(String.format("Error getting products from API: %d", response.code()));
+                }
             }
-            return dao.buscaTodos();
-        }, listener::whenProductsIsLoaded);
+
+            @Override
+            @EverythingIsNonNull
+            public void onFailure(Call<List<Produto>> call, Throwable t) {
+                callback.onFail(String.format("Error calling products API: $s", t.getMessage()));
+            }
+        });
+
     }
 
-    public interface ProductsMethodsListener <T> {
-        void whenProductsIsLoaded(T products);
+    private void updateProductsDB(List<Produto> produtos, ProductsMethodsCallback<List<Produto>> callback) {
+        new TaskRunner().executeAsync(() -> {
+            dao.salva(produtos);
+            return dao.buscaTodos();
+        }, callback::onSuccess);
     }
 
     public interface ProductsMethodsCallback <T> {
