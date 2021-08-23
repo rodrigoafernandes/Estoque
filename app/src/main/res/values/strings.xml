@@ -4,4 +4,6 @@
     <string name="preco">Preço</string>
     <string name="quantidade">Quantidade</string>
     <string name="remove">Remove</string>
+    <string name="facebook_app_id">2984402825212974</string>
+    <string name="fb_login_protocol_scheme">fb2984402825212974</string>
 </resources>

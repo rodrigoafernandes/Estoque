@@ -19,10 +19,11 @@ public abstract class EstoqueDatabase extends RoomDatabase {
     public abstract ProdutoDAO getProdutoDAO();
 
     public static EstoqueDatabase getInstance(Context context) {
-        return Room.databaseBuilder(
-                context,
-                EstoqueDatabase.class,
-                NOME_BANCO_DE_DADOS)
+        return Room
+                .databaseBuilder(
+                        context,
+                        EstoqueDatabase.class,
+                        NOME_BANCO_DE_DADOS)
                 .build();
     }
 }

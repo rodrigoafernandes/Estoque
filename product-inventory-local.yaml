@@ -25,13 +25,19 @@ spec:
       value: podman
     - name: SSL_CERT_FILE
       value: /etc/ssl/certs/ca-certificates.crt
-    image: localhost/product-inventory:1.0.0
+    image: localhost/product-inventory:2.0.0
     name: product-api
     ports:
     - containerPort: 8080
       hostPort: 8080
       protocol: TCP
-    resources: {}
+    resources:
+      requests:
+        memory: "20Mi"
+        cpu: "5m"
+      limits:
+        memory: "768Mi"
+        cpu: "500m"
     securityContext:
       allowPrivilegeEscalation: true
       capabilities:
@@ -74,6 +80,10 @@ spec:
       value: SVCPRODUCT
     image: docker.io/library/mariadb:10.5.9-focal
     name: mariadb
+    ports:
+      - containerPort: 3306
+        hostPort: 3306
+        protocol: TCP
     resources: {}
     securityContext:
       allowPrivilegeEscalation: true
